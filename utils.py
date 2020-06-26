@@ -52,7 +52,7 @@ class TopKAccuracyMetric(Metric):
         self.reset()
 
     def reset(self):
-        self.corrects = np.zeros(len(self.topk))
+        self.corrects = np.zeros(len(self.topk)) #np.zeros()是生成用0填充的数组
         self.num_samples = 0.
 
     def __call__(self, output, target):
@@ -188,18 +188,20 @@ def batch_augment(images, attention_map, mode='crop', theta=0.5, padding_ratio=0
 ##################################
 def get_transform(resize, phase='train'):
     if phase == 'train':
-        return transforms.Compose([
+        # torchvision.transforms: 常用的图片变换，例如裁剪、旋转等；
+        # torchvision.transforms.Compose()类。这个类的主要作用是串联多个图片变换的操作
+        return transforms.Compose([ 
             transforms.Resize(size=(int(resize[0] / 0.875), int(resize[1] / 0.875))),
             transforms.RandomCrop(resize),
-            transforms.RandomHorizontalFlip(0.5),
-            transforms.ColorJitter(brightness=0.126, saturation=0.5),
+            transforms.RandomHorizontalFlip(0.5), # 随机水平翻转
+            transforms.ColorJitter(brightness=0.126, saturation=0.5), # 对颜色的数据增强：图像亮度、饱和度、对比度变化
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         ])
     else:
         return transforms.Compose([
             transforms.Resize(size=(int(resize[0] / 0.875), int(resize[1] / 0.875))),
-            transforms.CenterCrop(resize),
+            transforms.CenterCrop(resize), # 均衡的缩放图像（保持图像原始比例），使图片的两个坐标（宽、高）都大于等于相应的视图坐标（负的内边距）。图像则位于视图的中央。
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         ])
