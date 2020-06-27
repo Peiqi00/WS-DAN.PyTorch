@@ -48,8 +48,10 @@ class BAP(nn.Module):
             for i in range(M):
                 AiF = self.pool(features * attentions[:, i:i + 1, ...]).view(B, -1)
                 feature_matrix.append(AiF)
-            feature_matrix = torch.cat(feature_matrix, dim=1)
-
+            feature_matrix = torch.cat(feature_matrix, dim=1)  # C = torch.cat( (A,B),0 )  #按维数0拼接（竖着拼）
+                                                               # C = torch.cat( (A,B),1 )  #按维数1拼接（横着拼）
+        # 两个归一化处理
+                
         # sign-sqrt
         feature_matrix = torch.sign(feature_matrix) * torch.sqrt(torch.abs(feature_matrix) + EPSILON)
 
@@ -85,18 +87,18 @@ class WSDAN(nn.Module):
         else:
             raise ValueError('Unsupported net: %s' % net)
 
-        # Attention Maps
+        # Attention Maps 映射
         self.attentions = BasicConv2d(self.num_features, self.M, kernel_size=1)
 
-        # Bilinear Attention Pooling
+        # Bilinear Attention Pooling 池化
         self.bap = BAP(pool='GAP')
 
-        # Classification Layer
+        # Classification Layer 分类
         self.fc = nn.Linear(self.M * self.num_features, self.num_classes, bias=False)
 
         logging.info('WSDAN: using {} as feature extractor, num_classes: {}, num_attentions: {}'.format(net, self.num_classes, self.M))
 
-    def forward(self, x):
+    def forward(self, x): # 前向传播
         batch_size = x.size(0)
 
         # Feature Maps, Attention Maps and Feature Matrix
