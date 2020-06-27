@@ -16,7 +16,7 @@ import torchvision.transforms as transforms
 class CenterLoss(nn.Module):
     def __init__(self):
         super(CenterLoss, self).__init__()
-        self.l2_loss = nn.MSELoss(reduction='sum')
+        self.l2_loss = nn.MSELoss(reduction='sum') # 使用MSELoss损失函数
 
     def forward(self, outputs, targets):
         return self.l2_loss(outputs, targets) / outputs.size(0)
@@ -39,9 +39,9 @@ class AverageMeter(Metric):
         self.total_num = 0.
 
     def __call__(self, batch_score, sample_num=1):
-        self.scores += batch_score
-        self.total_num += sample_num
-        return self.scores / self.total_num
+        self.scores += batch_score # 每个分支的和
+        self.total_num += sample_num # 总样本数
+        return self.scores / self.total_num # 平均每个分支的得分
 
 
 class TopKAccuracyMetric(Metric):
@@ -60,10 +60,10 @@ class TopKAccuracyMetric(Metric):
         self.num_samples += target.size(0)
         _, pred = output.topk(self.maxk, 1, True, True)
         pred = pred.t()
-        correct = pred.eq(target.view(1, -1).expand_as(pred))
+        correct = pred.eq(target.view(1, -1).expand_as(pred)) # 在torch里面，view函数相当于numpy的reshape，在函数的参数中经常可以看到-1例如x.view(-1, 4)，这里-1表示一个不确定的数，就是你如果不确定你想要reshape成几行，但是你很肯定要reshape成4列，那不确定的地方就可以写成-1
 
-        for i, k in enumerate(self.topk):
-            correct_k = correct[:k].view(-1).float().sum(0)
+        for i, k in enumerate(self.topk): # 枚举
+            correct_k = correct[:k].view(-1).float().sum(0) # view(-1)不确定有几列
             self.corrects[i] += correct_k.item()
 
         return self.corrects * 100. / self.num_samples
@@ -148,7 +148,7 @@ def batch_augment(images, attention_map, mode='crop', theta=0.5, padding_ratio=0
         for batch_index in range(batches):
             atten_map = attention_map[batch_index:batch_index + 1]
             if isinstance(theta, tuple):
-                theta_c = random.uniform(*theta) * atten_map.max()
+                theta_c = random.uniform(*theta) * atten_map.max() # uniform() 方法将随机生成下一个实数，它在 [x, y] 范围内。
             else:
                 theta_c = theta * atten_map.max()
 
