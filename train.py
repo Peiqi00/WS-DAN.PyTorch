@@ -6,7 +6,7 @@ import os
 import time
 import logging
 import warnings
-from tqdm import tqdm
+from tqdm import tqdm # tqdm是python中很常用的模块，它的作用就是在终端上出现一个进度条，使得代码进度可视化。
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -36,13 +36,13 @@ drop_metric = TopKAccuracyMetric(topk=(1, 5))
 
 def main():
     ##################################
-    # Initialize saving directory
+    # Initialize saving directory 初始化保存目录
     ##################################
     if not os.path.exists(config.save_dir):
         os.makedirs(config.save_dir)
 
     ##################################
-    # Logging setting
+    # Logging setting 日志设置
     ##################################
     logging.basicConfig(
         filename=os.path.join(config.save_dir, config.log_name),
@@ -67,7 +67,7 @@ def main():
     ##################################
     logs = {}
     start_epoch = 0
-    net = WSDAN(num_classes=num_classes, M=config.num_attentions, net=config.net, pretrained=True)
+    net = WSDAN(num_classes=num_classes, M=config.num_attentions, net=config.net, pretrained=True) # 使用WSDAN这个模型，命名为net
 
     # feature_center: size of (#classes, #attention_maps * #channel_features)
     feature_center = torch.zeros(num_classes, config.num_attentions * net.num_features).to(device)
@@ -128,7 +128,9 @@ def main():
     logging.info('')
 
     for epoch in range(start_epoch, config.epochs):
-        callback.on_epoch_begin()
+        callback.on_epoch_begin()         # 当程序跑起来时，一般情况下，应用程序（application program）会时常通过API调用库里所预先备好的函数。
+                                          # 但是有些库函数（library function）却要求应用先传给它一个函数，好在合适的时候调用，以完成目标任务。
+                                          # 这个被传入的、后又被调用的函数就称为回调函数（callback function）
 
         logs['epoch'] = epoch + 1
         logs['lr'] = optimizer.param_groups[0]['lr']
@@ -141,9 +143,11 @@ def main():
         train(logs=logs,
               data_loader=train_loader,
               net=net,
-              feature_center=feature_center,
+              feature_center=feature_center,  # feature_center: size of (#classes, #attention_maps * #channel_features)
+                                              # feature_center = torch.zeros(num_classes, config.num_attentions * net.num_features).to(device)
               optimizer=optimizer,
               pbar=pbar)
+        # validate 验证
         validate(logs=logs,
                  data_loader=validate_loader,
                  net=net,
@@ -187,7 +191,7 @@ def train(**kwargs):
         # Raw Image
         ##################################
         # raw images forward
-        y_pred_raw, feature_matrix, attention_map = net(X)
+        y_pred_raw, feature_matrix, attention_map = net(X)  # y_pred_raw ——>p
 
         # Update Feature Center
         feature_center_batch = F.normalize(feature_center[y], dim=-1)
@@ -197,7 +201,7 @@ def train(**kwargs):
         # Attention Cropping
         ##################################
         with torch.no_grad():
-            crop_images = batch_augment(X, attention_map[:, :1, :, :], mode='crop', theta=(0.4, 0.6), padding_ratio=0.1)
+            crop_images = batch_augment(X, attention_map[:, :1, :, :], mode='crop', theta=(0.4, 0.6), padding_ratio=0.1) # augment增加；增强；扩大；充填
 
         # crop images forward
         y_pred_crop, _, _ = net(crop_images)
@@ -248,13 +252,13 @@ def train(**kwargs):
 
 
 def validate(**kwargs):
-    # Retrieve training configuration
+    # Retrieve training configuration 检索训练配置
     logs = kwargs['logs']
     data_loader = kwargs['data_loader']
     net = kwargs['net']
     pbar = kwargs['pbar']
 
-    # metrics initialization
+    # metrics initialization 指标初始化
     loss_container.reset()
     raw_metric.reset()
 
@@ -273,7 +277,7 @@ def validate(**kwargs):
             y_pred_raw, _, attention_map = net(X)
 
             ##################################
-            # Object Localization and Refinement
+            # Object Localization and Refinement 对象定位和优化
             ##################################
             crop_images = batch_augment(X, attention_map, mode='crop', theta=0.1, padding_ratio=0.05)
             y_pred_crop, _, _ = net(crop_images)
